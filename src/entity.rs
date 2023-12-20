@@ -53,4 +53,8 @@ impl Entity {
     pub fn bounce_x(&mut self) {
         self.velocity.x *= -1.0;
     }
+
+    pub fn still_moving(&self) -> bool {
+        self.velocity.x.abs() > 0.01
+    }
 }
