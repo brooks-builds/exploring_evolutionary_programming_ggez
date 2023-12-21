@@ -1,20 +1,22 @@
-mod individual;
+pub mod game_info;
+pub mod individual;
 mod logic;
 
+use game_info::GameInfo;
+use glam::Vec2;
 use logic::{create_population, generation, Population};
 
 pub struct Bot {
-    winning_position: f32,
-    population: Population,
+    pub population: Population,
     graded_retain_percent: f32,
     nongraded_retain_percent: f32,
     pub generation_count: u64,
     mutation_chance: f32,
+    pub population_size: u8,
 }
 
 impl Bot {
     pub fn new() -> Self {
-        let winning_position = 1150.0_f32;
         let population_size = 10;
         let population = create_population(population_size);
         let graded_retain_percent = 0.3;
@@ -23,32 +25,23 @@ impl Bot {
         let mutation_chance = 0.01;
 
         Self {
-            winning_position,
             population,
             graded_retain_percent,
             nongraded_retain_percent,
             generation_count,
             mutation_chance,
+            population_size,
         }
     }
 
-    pub fn play(&self) -> Vec<f32> {
+    pub fn play(&self, game_info: GameInfo) -> Vec<Vec2> {
         self.population
             .iter()
-            .map(|individual| individual.force_x)
+            .map(move |individual| individual.play(&game_info))
             .collect()
     }
 
-    pub fn run(&mut self, close_to_edges: Vec<f32>) {
-        self.population
-            .iter_mut()
-            .zip(close_to_edges)
-            .for_each(|(individual, close_to_edge)| individual.end_position_x = close_to_edge);
-
-        self.population
-            .iter_mut()
-            .for_each(|individual| individual.set_score(self.winning_position));
-
+    pub fn run(&mut self) {
         let successful: Vec<&individual::Individual> = self
             .population
             .iter()

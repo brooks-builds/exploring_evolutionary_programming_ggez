@@ -1,6 +1,6 @@
 mod entity;
 
-use bot::Bot;
+use bot::{game_info::GameInfo, individual::Individual, Bot};
 use entity::Entity;
 use ggez::{
     event::EventHandler,
@@ -9,26 +9,40 @@ use ggez::{
 };
 
 pub struct MainState {
-    entities: Vec<Entity>,
+    players: Vec<Entity>,
     width: f32,
-    friction: Vec2,
+    height: f32,
     running: bool,
     bot: Bot,
+    target: Entity,
+    bullet_speed: f32,
+    bullets: Vec<Entity>,
 }
 
 impl MainState {
-    pub fn new(width: f32, _height: f32) -> Self {
-        let friction = Vec2::new(0.01, 0.01);
-        let entities = vec![];
+    pub fn new(width: f32, height: f32) -> Self {
         let running = false;
         let bot = Bot::new();
+        let mut target = Entity::new(width - 50.0, 50.0, None);
+        let bullet_speed = 5.0;
+        let players = bot
+            .population
+            .iter()
+            .map(|&individual| Entity::new(50.0, height / 2.0 - 50.0, Some(individual)))
+            .collect();
+        let bullets = vec![];
+
+        target.apply_force(Vec2::new(0.0, 1.0));
 
         Self {
-            entities,
+            players,
             width,
-            friction,
+            height,
             running,
             bot,
+            target,
+            bullet_speed,
+            bullets,
         }
     }
 }
@@ -36,48 +50,28 @@ impl MainState {
 impl EventHandler for MainState {
     fn update(&mut self, _context: &mut ggez::Context) -> Result<(), ggez::GameError> {
         if self.running {
-            let mut still_moving = 0;
-
-            for entity in self.entities.iter_mut() {
-                let mut friction_force = entity.velocity * self.friction;
-                friction_force *= -1.0;
-                entity.apply_force(friction_force);
-                entity.update();
-
-                if entity.position.x + entity.size > self.width {
-                    entity.bounce_x();
-                }
-
-                if entity.position.x - entity.size > 0.0 && entity.still_moving() {
-                    still_moving += 1;
-                }
-            }
-
-            if still_moving == 0 {
-                self.running = false;
-                let xs = self
-                    .entities
-                    .iter()
-                    .map(|entity| entity.position.x)
-                    .collect();
-                self.bot.run(xs)
-            }
+            self.bullets.iter_mut().for_each(|bullet| bullet.update());
         } else {
-            let force_xs = self.bot.play();
-            self.entities = force_xs
-                .into_iter()
-                .enumerate()
-                .map(|(index, force_x)| {
-                    let y = (index as f32 + 1.0) * 50.0;
-                    let mut entity = Entity::new(25.0, y);
-                    let force = Vec2::new(force_x, 0.0);
+            self.bullets = self
+                .players
+                .iter()
+                .map(|player| {
+                    let mut bullet = Entity::new(player.position.x, player.position.y, None);
+                    let aim = player.individual.unwrap().aim * self.bullet_speed;
 
-                    entity.apply_force(force);
+                    bullet.apply_force(aim);
 
-                    entity
+                    bullet
                 })
                 .collect();
             self.running = true;
+        }
+
+        self.target.update();
+        if self.target.position.y + self.target.size > self.height
+            || self.target.position.y - self.target.size < 0.0
+        {
+            self.target.bounce_y();
         }
 
         Ok(())
@@ -86,12 +80,22 @@ impl EventHandler for MainState {
     fn draw(&mut self, context: &mut ggez::Context) -> Result<(), ggez::GameError> {
         let mut canvas = graphics::Canvas::from_frame(context, Some(graphics::Color::BLACK));
 
-        for entity in self.entities.iter() {
+        for entity in self.players.iter() {
             canvas.draw(
                 &entity.render(&context)?,
                 DrawParam::default().dest(entity.position),
             );
         }
+
+        for bullet in self.bullets.iter() {
+            let mesh = bullet.render(context)?;
+            let params = DrawParam::default().dest(bullet.position);
+            canvas.draw(&mesh, params);
+        }
+
+        let target_mesh = self.target.render(context)?;
+        let target_params = DrawParam::default().dest(self.target.position.clone());
+        canvas.draw(&target_mesh, target_params);
 
         let mut text = graphics::Text::new(self.bot.generation_count.to_string());
         text.set_scale(PxScale::from(64.0));

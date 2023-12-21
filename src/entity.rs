@@ -1,3 +1,4 @@
+use bot::individual::Individual;
 use ggez::{
     glam::Vec2,
     graphics::{Color, DrawMode, Mesh},
@@ -10,10 +11,11 @@ pub struct Entity {
     color: Color,
     pub velocity: Vec2,
     acceleration: Vec2,
+    pub individual: Option<Individual>,
 }
 
 impl Entity {
-    pub fn new(x: f32, y: f32) -> Self {
+    pub fn new(x: f32, y: f32, individual: Option<Individual>) -> Self {
         let position = Vec2::new(x, y);
         let size = 25.0;
         let color = Color::WHITE;
@@ -26,6 +28,7 @@ impl Entity {
             color,
             velocity,
             acceleration,
+            individual,
         }
     }
 
@@ -52,6 +55,10 @@ impl Entity {
 
     pub fn bounce_x(&mut self) {
         self.velocity.x *= -1.0;
+    }
+
+    pub fn bounce_y(&mut self) {
+        self.velocity.y *= -1.0;
     }
 
     pub fn still_moving(&self) -> bool {
