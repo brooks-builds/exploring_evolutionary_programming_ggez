@@ -1,7 +1,7 @@
-mod core;
 mod individual;
+mod logic;
 
-use core::{create_population, generation, Population};
+use logic::{create_population, generation, Population};
 
 pub struct Bot {
     winning_position: f32,
