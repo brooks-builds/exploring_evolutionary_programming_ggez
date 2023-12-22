@@ -17,12 +17,12 @@ pub struct Bot {
 
 impl Bot {
     pub fn new() -> Self {
-        let population_size = 10;
+        let population_size = 100;
         let population = create_population(population_size);
         let graded_retain_percent = 0.3;
         let nongraded_retain_percent = 0.2;
         let generation_count = 1;
-        let mutation_chance = 0.01;
+        let mutation_chance = 0.1;
 
         Self {
             population,
@@ -42,19 +42,19 @@ impl Bot {
     }
 
     pub fn run(&mut self) {
-        let successful: Vec<&individual::Individual> = self
-            .population
-            .iter()
-            .filter(|individual| individual.score > 0.9999)
-            .collect();
+        // let successful: Vec<&individual::Individual> = self
+        //     .population
+        //     .iter()
+        //     .filter(|individual| individual.score > 0.9999)
+        //     .collect();
 
-        if !successful.is_empty() {
-            println!(
-                "an individual figured out the correct force after {} generations: {:?}",
-                self.generation_count, successful
-            );
-            std::process::exit(0);
-        }
+        // if !successful.is_empty() {
+        //     println!(
+        //         "an individual figured out the correct force after {} generations: {:?}",
+        //         self.generation_count, successful
+        //     );
+        //     std::process::exit(0);
+        // }
 
         let population = self.population.clone();
         self.population = generation(

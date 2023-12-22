@@ -1,6 +1,6 @@
 mod entity;
 
-use bot::{game_info::GameInfo, individual::Individual, Bot};
+use bot::{game_info::GameInfo, Bot};
 use entity::Entity;
 use ggez::{
     event::EventHandler,
@@ -23,16 +23,16 @@ impl MainState {
     pub fn new(width: f32, height: f32) -> Self {
         let running = false;
         let bot = Bot::new();
-        let mut target = Entity::new(width - 50.0, 50.0, None);
-        let bullet_speed = 5.0;
+        let mut target = Entity::new(width - 50.0, 50.0, 25.0);
+        let bullet_speed = 15.0;
         let players = bot
             .population
             .iter()
-            .map(|&individual| Entity::new(50.0, height / 2.0 - 50.0, Some(individual)))
+            .map(|_individual| Entity::new(50.0, height / 2.0 - 50.0, 25.0))
             .collect();
         let bullets = vec![];
 
-        target.apply_force(Vec2::new(0.0, 1.0));
+        target.apply_force(Vec2::new(0.0, 0.5));
 
         Self {
             players,
@@ -49,15 +49,65 @@ impl MainState {
 
 impl EventHandler for MainState {
     fn update(&mut self, _context: &mut ggez::Context) -> Result<(), ggez::GameError> {
+        let arena_size = Vec2::new(self.width, self.height);
+        let target_position = self.target.position;
+        let target_velocity = self.target.velocity;
+        let target_size = self.target.size;
+        let bullet_speed = self.bullet_speed;
+        let target = &self.target;
+
         if self.running {
-            self.bullets.iter_mut().for_each(|bullet| bullet.update());
+            self.bullets
+                .iter_mut()
+                .zip(&mut self.players)
+                .zip(&mut self.bot.population)
+                .for_each(move |((bullet, player), individual)| {
+                    if bullet.is_alive {
+                        bullet.update();
+                    }
+
+                    let bullet_distance_to_target =
+                        (bullet.position - target.position).length().abs();
+                    if bullet_distance_to_target <= target_size
+                        || bullet.is_out_of_arena(arena_size.x, arena_size.y)
+                    {
+                        bullet.is_alive = false;
+                    }
+
+                    let game_info = GameInfo::new(
+                        player.position,
+                        arena_size,
+                        target_position,
+                        target_velocity,
+                        target_size,
+                        bullet.position,
+                        bullet_speed,
+                    );
+                    individual.update(game_info);
+                });
+
+            let alive_bullets = self.bullets.iter().filter(|bullet| bullet.is_alive).count();
+            if alive_bullets == 0 {
+                self.running = false;
+            }
         } else {
+            self.bot.run();
             self.bullets = self
                 .players
                 .iter()
-                .map(|player| {
-                    let mut bullet = Entity::new(player.position.x, player.position.y, None);
-                    let aim = player.individual.unwrap().aim * self.bullet_speed;
+                .zip(&self.bot.population)
+                .map(|(player, individual)| {
+                    let mut bullet = Entity::new(player.position.x, player.position.y, 5.0);
+                    let game_info = GameInfo::new(
+                        player.position,
+                        arena_size,
+                        target_position,
+                        target_velocity,
+                        target_size,
+                        bullet.position,
+                        bullet_speed,
+                    );
+                    let aim = individual.play(&game_info);
 
                     bullet.apply_force(aim);
 
@@ -80,12 +130,12 @@ impl EventHandler for MainState {
     fn draw(&mut self, context: &mut ggez::Context) -> Result<(), ggez::GameError> {
         let mut canvas = graphics::Canvas::from_frame(context, Some(graphics::Color::BLACK));
 
-        for entity in self.players.iter() {
-            canvas.draw(
-                &entity.render(&context)?,
-                DrawParam::default().dest(entity.position),
-            );
-        }
+        // for entity in self.players.iter() {
+        //     canvas.draw(
+        //         &entity.render(&context)?,
+        //         DrawParam::default().dest(entity.position),
+        //     );
+        // }
 
         for bullet in self.bullets.iter() {
             let mesh = bullet.render(context)?;

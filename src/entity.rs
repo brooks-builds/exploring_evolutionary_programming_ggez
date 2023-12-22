@@ -1,4 +1,3 @@
-use bot::individual::Individual;
 use ggez::{
     glam::Vec2,
     graphics::{Color, DrawMode, Mesh},
@@ -11,16 +10,16 @@ pub struct Entity {
     color: Color,
     pub velocity: Vec2,
     acceleration: Vec2,
-    pub individual: Option<Individual>,
+    pub is_alive: bool,
 }
 
 impl Entity {
-    pub fn new(x: f32, y: f32, individual: Option<Individual>) -> Self {
+    pub fn new(x: f32, y: f32, size: f32) -> Self {
         let position = Vec2::new(x, y);
-        let size = 25.0;
         let color = Color::WHITE;
         let velocity = Vec2::ZERO;
         let acceleration = Vec2::ZERO;
+        let is_alive = true;
 
         Self {
             position,
@@ -28,7 +27,7 @@ impl Entity {
             color,
             velocity,
             acceleration,
-            individual,
+            is_alive,
         }
     }
 
@@ -53,15 +52,14 @@ impl Entity {
         self.acceleration = Vec2::ZERO;
     }
 
-    pub fn bounce_x(&mut self) {
-        self.velocity.x *= -1.0;
-    }
-
     pub fn bounce_y(&mut self) {
         self.velocity.y *= -1.0;
     }
 
-    pub fn still_moving(&self) -> bool {
-        self.velocity.x.abs() > 0.01
+    pub fn is_out_of_arena(&self, arena_width: f32, arena_height: f32) -> bool {
+        self.position.y + self.size < 0.0
+            || self.position.x - self.size > arena_width
+            || self.position.y - self.size > arena_height
+            || self.position.x + self.size < 0.0
     }
 }

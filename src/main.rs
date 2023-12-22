@@ -1,8 +1,5 @@
 use exploring_evolutionary_programming_ggez::MainState;
-use ggez::{
-    conf::{WindowMode, WindowSetup},
-    event, ContextBuilder,
-};
+use ggez::{conf::WindowMode, event, ContextBuilder};
 
 fn main() {
     let width = 1200.0;

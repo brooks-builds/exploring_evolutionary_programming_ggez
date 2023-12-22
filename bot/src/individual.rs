@@ -5,19 +5,23 @@ use crate::game_info::GameInfo;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Individual {
-    pub aim: Vec2,
     pub score: f32,
+    pub aim_x: f32,
+    pub aim_y: f32,
 }
 
 impl Individual {
     pub fn new() -> Self {
         let mut rng = thread_rng();
-        let aim_x = rng.gen();
-        let aim_y = rng.gen();
-        let aim = Vec2::new(aim_x, aim_y);
         let score = 0.0;
+        let aim_x = rng.gen_range(-1.0..=1.0);
+        let aim_y = rng.gen_range(-1.0..=1.0);
 
-        Self { aim, score }
+        Self {
+            score,
+            aim_x,
+            aim_y,
+        }
     }
 
     pub fn new_from_parents(
@@ -26,10 +30,15 @@ impl Individual {
         mutation_chance: f32,
         rng: &mut ThreadRng,
     ) -> Self {
-        let aim = Vec2::new(parent_one.aim.x, parent_two.aim.y);
-        let mut individual = Self { aim, score: 0.0 };
+        let aim_x = parent_one.aim_x;
+        let aim_y = parent_two.aim_y;
+        let mut individual = Self {
+            aim_x,
+            aim_y,
+            score: 0.0,
+        };
 
-        if rng.gen::<f32>() < mutation_chance {
+        if rng.gen_range(0.0..1.0) < mutation_chance {
             individual.mutate(rng);
         }
 
@@ -37,9 +46,6 @@ impl Individual {
     }
 
     pub fn update(&mut self, game_info: GameInfo) {
-        let starting_distance = (game_info.position - game_info.target_position)
-            .length()
-            .abs();
         let mut bullet_distance_to_target = (game_info.bullet_position - game_info.target_position)
             .length()
             .abs();
@@ -55,13 +61,14 @@ impl Individual {
     }
 
     pub fn play(&self, game_info: &GameInfo) -> Vec2 {
-        self.aim
+        let angle_between_us_and_target = game_info.position.angle_between(game_info.position);
+        let angle =
+            self.aim_x * angle_between_us_and_target + self.aim_y * game_info.target_velocity.y;
+        Vec2::from_angle(angle) * game_info.bullet_speed
     }
 
     fn mutate(&mut self, rng: &mut ThreadRng) {
-        let aim_x = rng.gen();
-        let aim_y = rng.gen();
-
-        self.aim = Vec2::new(aim_x, aim_y);
+        self.aim_x = rng.gen_range(-1.0..=1.0);
+        self.aim_y = rng.gen_range(-1.0..=1.0);
     }
 }
