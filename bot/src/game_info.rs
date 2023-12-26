@@ -7,8 +7,9 @@ pub struct GameInfo {
     pub target_position: Vec2,
     pub target_velocity: Vec2,
     pub target_size: f32,
-    pub bullet_position: Vec2,
+    pub bullet_position: Option<Vec2>,
     pub bullet_speed: f32,
+    pub aim_rotation: f32,
 }
 
 impl GameInfo {
@@ -18,8 +19,9 @@ impl GameInfo {
         target_position: Vec2,
         target_velocity: Vec2,
         target_size: f32,
-        bullet_position: Vec2,
+        bullet_position: Option<Vec2>,
         bullet_speed: f32,
+        aim_rotation: f32,
     ) -> Self {
         Self {
             position,
@@ -29,6 +31,7 @@ impl GameInfo {
             target_size,
             bullet_position,
             bullet_speed,
+            aim_rotation,
         }
     }
 }

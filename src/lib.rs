@@ -1,5 +1,6 @@
 mod entity;
 
+use ::ggez::graphics::Color;
 use bot::{game_info::GameInfo, Bot};
 use entity::Entity;
 use ggez::{
@@ -17,6 +18,7 @@ pub struct MainState {
     target: Entity,
     bullet_speed: f32,
     bullets: Vec<Entity>,
+    rotate_amount: f32,
 }
 
 impl MainState {
@@ -31,6 +33,7 @@ impl MainState {
             .map(|_individual| Entity::new(50.0, height / 2.0 - 50.0, 25.0))
             .collect();
         let bullets = vec![];
+        let rotate_amount = 0.01;
 
         target.apply_force(Vec2::new(0.0, 0.5));
 
@@ -43,6 +46,7 @@ impl MainState {
             target,
             bullet_speed,
             bullets,
+            rotate_amount,
         }
     }
 }
@@ -54,68 +58,93 @@ impl EventHandler for MainState {
         let target_velocity = self.target.velocity;
         let target_size = self.target.size;
         let bullet_speed = self.bullet_speed;
-        let target = &self.target;
 
-        if self.running {
-            self.bullets
-                .iter_mut()
-                .zip(&mut self.players)
-                .zip(&mut self.bot.population)
-                .for_each(move |((bullet, player), individual)| {
-                    if bullet.is_alive {
-                        bullet.update();
-                    }
+        for (player, individual) in self.players.iter_mut().zip(self.bot.population.iter()) {
+            let game_info = GameInfo::new(
+                player.position,
+                arena_size,
+                target_position,
+                target_velocity,
+                target_size,
+                None,
+                bullet_speed,
+                player.aim_rotation,
+            );
+            let commands = individual.play(&game_info);
 
-                    let bullet_distance_to_target =
-                        (bullet.position - target.position).length().abs();
-                    if bullet_distance_to_target <= target_size
-                        || bullet.is_out_of_arena(arena_size.x, arena_size.y)
-                    {
-                        bullet.is_alive = false;
-                    }
-
-                    let game_info = GameInfo::new(
-                        player.position,
-                        arena_size,
-                        target_position,
-                        target_velocity,
-                        target_size,
-                        bullet.position,
-                        bullet_speed,
-                    );
-                    individual.update(game_info);
-                });
-
-            let alive_bullets = self.bullets.iter().filter(|bullet| bullet.is_alive).count();
-            if alive_bullets == 0 {
-                self.running = false;
+            for command in commands {
+                match command {
+                    bot::command::Command::RotateLeft => player.aim_rotation -= self.rotate_amount,
+                    bot::command::Command::RotateRight => player.aim_rotation += self.rotate_amount,
+                    bot::command::Command::Fire => (),
+                    bot::command::Command::Nothing => (),
+                }
             }
-        } else {
-            self.bot.run();
-            self.bullets = self
-                .players
-                .iter()
-                .zip(&self.bot.population)
-                .map(|(player, individual)| {
-                    let mut bullet = Entity::new(player.position.x, player.position.y, 5.0);
-                    let game_info = GameInfo::new(
-                        player.position,
-                        arena_size,
-                        target_position,
-                        target_velocity,
-                        target_size,
-                        bullet.position,
-                        bullet_speed,
-                    );
-                    let aim = individual.play(&game_info);
-
-                    bullet.apply_force(aim);
-
-                    bullet
-                })
-                .collect();
-            self.running = true;
         }
+        // let target = &self.target;
+
+        // if self.running {
+        //     self.bullets
+        //         .iter_mut()
+        //         .zip(&mut self.players)
+        //         .zip(&mut self.bot.population)
+        //         .for_each(move |((bullet, player), individual)| {
+        //             if bullet.is_alive {
+        //                 bullet.update();
+        //             }
+
+        //             let bullet_distance_to_target =
+        //                 (bullet.position - target.position).length().abs();
+        //             if bullet_distance_to_target <= target_size
+        //                 || bullet.is_out_of_arena(arena_size.x, arena_size.y)
+        //             {
+        //                 bullet.is_alive = false;
+        //             }
+
+        //             let game_info = GameInfo::new(
+        //                 player.position,
+        //                 arena_size,
+        //                 target_position,
+        //                 target_velocity,
+        //                 target_size,
+        //                 bullet.position,
+        //                 bullet_speed,
+        //                 player.aim_rotation,
+        //             );
+        //             individual.update(game_info);
+        //         });
+
+        //     let alive_bullets = self.bullets.iter().filter(|bullet| bullet.is_alive).count();
+        //     if alive_bullets == 0 {
+        //         self.running = false;
+        //     }
+        // } else {
+        //     self.bot.run();
+        //     self.bullets = self
+        //         .players
+        //         .iter()
+        //         .zip(&self.bot.population)
+        //         .map(|(player, individual)| {
+        //             let mut bullet = Entity::new(player.position.x, player.position.y, 5.0);
+        //             let game_info = GameInfo::new(
+        //                 player.position,
+        //                 arena_size,
+        //                 target_position,
+        //                 target_velocity,
+        //                 target_size,
+        //                 bullet.position,
+        //                 bullet_speed,
+        //                 player.aim_rotation,
+        //             );
+        //             let commands = individual.play(&game_info);
+
+        //             bullet.apply_force(aim);
+
+        //             bullet
+        //         })
+        //         .collect();
+        //     self.running = true;
+        // }
 
         self.target.update();
         if self.target.position.y + self.target.size > self.height
@@ -130,12 +159,16 @@ impl EventHandler for MainState {
     fn draw(&mut self, context: &mut ggez::Context) -> Result<(), ggez::GameError> {
         let mut canvas = graphics::Canvas::from_frame(context, Some(graphics::Color::BLACK));
 
-        // for entity in self.players.iter() {
-        //     canvas.draw(
-        //         &entity.render(&context)?,
-        //         DrawParam::default().dest(entity.position),
-        //     );
-        // }
+        for entity in self.players.iter() {
+            canvas.draw(
+                &entity.render(&context)?,
+                DrawParam::default().dest(entity.position),
+            );
+            let aim = Vec2::from_angle(entity.aim_rotation);
+            let points = [entity.position, entity.position + (aim * 50.0)];
+            let line = graphics::Mesh::new_line(context, &points, 2.0, Color::WHITE)?;
+            canvas.draw(&line, DrawParam::default());
+        }
 
         for bullet in self.bullets.iter() {
             let mesh = bullet.render(context)?;

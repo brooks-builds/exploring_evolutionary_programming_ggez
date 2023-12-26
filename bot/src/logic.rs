@@ -5,9 +5,10 @@ pub type Population = Vec<Individual>;
 
 pub fn create_population(population_size: u8) -> Population {
     let mut population = vec![];
+    let mut rng = thread_rng();
 
     for _ in 0..population_size {
-        population.push(Individual::new());
+        population.push(Individual::new(&mut rng));
     }
     population
 }

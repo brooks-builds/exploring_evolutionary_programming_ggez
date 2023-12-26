@@ -11,6 +11,7 @@ pub struct Entity {
     pub velocity: Vec2,
     acceleration: Vec2,
     pub is_alive: bool,
+    pub aim_rotation: f32,
 }
 
 impl Entity {
@@ -20,6 +21,7 @@ impl Entity {
         let velocity = Vec2::ZERO;
         let acceleration = Vec2::ZERO;
         let is_alive = true;
+        let aim_rotation = 0.0;
 
         Self {
             position,
@@ -28,6 +30,7 @@ impl Entity {
             velocity,
             acceleration,
             is_alive,
+            aim_rotation,
         }
     }
 

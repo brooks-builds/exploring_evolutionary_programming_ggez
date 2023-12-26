@@ -1,26 +1,25 @@
 use glam::Vec2;
-use rand::{rngs::ThreadRng, thread_rng, Rng};
+use rand::{rngs::ThreadRng, Rng};
 
-use crate::game_info::GameInfo;
+use crate::{command::Command, game_info::GameInfo, perceptron::Perceptron};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Individual {
+    rotate_perceptron: Perceptron,
+    fire_perceptron: Perceptron,
     pub score: f32,
-    pub aim_x: f32,
-    pub aim_y: f32,
 }
 
 impl Individual {
-    pub fn new() -> Self {
-        let mut rng = thread_rng();
+    pub fn new(rng: &mut ThreadRng) -> Self {
+        let rotate_perceptron = Perceptron::new(rng, 7);
+        let fire_perceptron = Perceptron::new(rng, 7);
         let score = 0.0;
-        let aim_x = rng.gen_range(-1.0..=1.0);
-        let aim_y = rng.gen_range(-1.0..=1.0);
 
         Self {
+            rotate_perceptron,
+            fire_perceptron,
             score,
-            aim_x,
-            aim_y,
         }
     }
 
@@ -30,11 +29,11 @@ impl Individual {
         mutation_chance: f32,
         rng: &mut ThreadRng,
     ) -> Self {
-        let aim_x = parent_one.aim_x;
-        let aim_y = parent_two.aim_y;
+        let rotate_perceptron = parent_one.rotate_perceptron.clone();
+        let fire_perceptron = parent_two.fire_perceptron.clone();
         let mut individual = Self {
-            aim_x,
-            aim_y,
+            rotate_perceptron,
+            fire_perceptron,
             score: 0.0,
         };
 
@@ -46,7 +45,10 @@ impl Individual {
     }
 
     pub fn update(&mut self, game_info: GameInfo) {
-        let mut bullet_distance_to_target = (game_info.bullet_position - game_info.target_position)
+        let mut bullet_distance_to_target = (game_info
+            .bullet_position
+            .expect("must have bullet position")
+            - game_info.target_position)
             .length()
             .abs();
 
@@ -60,15 +62,36 @@ impl Individual {
         }
     }
 
-    pub fn play(&self, game_info: &GameInfo) -> Vec2 {
-        let angle_between_us_and_target = game_info.position.angle_between(game_info.position);
-        let angle =
-            self.aim_x * angle_between_us_and_target + self.aim_y * game_info.target_velocity.y;
-        Vec2::from_angle(angle) * game_info.bullet_speed
+    pub fn play(&self, game_info: &GameInfo) -> [Command; 2] {
+        let position = game_info.position.normalize();
+        let rotation = game_info.aim_rotation / 360.0;
+        let target_position = game_info.target_position.normalize();
+        let target_velocity = game_info.target_velocity.normalize();
+
+        let inputs = [
+            position.x,
+            position.y,
+            rotation,
+            target_position.x,
+            target_position.y,
+            target_velocity.x,
+            target_velocity.y,
+        ];
+        let rotation_guess = match self.rotate_perceptron.guess(&inputs) {
+            1 => Command::RotateRight,
+            -1 => Command::RotateLeft,
+            0 => Command::Nothing,
+            _ => unreachable!(),
+        };
+        let fire_guess = match self.rotate_perceptron.guess(&inputs) {
+            1 => Command::Fire,
+            _ => Command::Nothing,
+        };
+
+        [rotation_guess, fire_guess]
     }
 
-    fn mutate(&mut self, rng: &mut ThreadRng) {
-        self.aim_x = rng.gen_range(-1.0..=1.0);
-        self.aim_y = rng.gen_range(-1.0..=1.0);
+    fn mutate(&mut self, _rng: &mut ThreadRng) {
+        todo!()
     }
 }

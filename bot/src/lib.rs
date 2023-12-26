@@ -1,7 +1,10 @@
+pub mod command;
 pub mod game_info;
 pub mod individual;
 mod logic;
+pub mod perceptron;
 
+use command::Command;
 use game_info::GameInfo;
 use glam::Vec2;
 use logic::{create_population, generation, Population};
@@ -17,7 +20,7 @@ pub struct Bot {
 
 impl Bot {
     pub fn new() -> Self {
-        let population_size = 100;
+        let population_size = 10;
         let population = create_population(population_size);
         let graded_retain_percent = 0.3;
         let nongraded_retain_percent = 0.2;
@@ -34,11 +37,11 @@ impl Bot {
         }
     }
 
-    pub fn play(&self, game_info: GameInfo) -> Vec<Vec2> {
+    pub fn play(&self, game_info: GameInfo) -> Vec<[Command; 2]> {
         self.population
             .iter()
             .map(move |individual| individual.play(&game_info))
-            .collect()
+            .collect::<Vec<[Command; 2]>>()
     }
 
     pub fn run(&mut self) {
