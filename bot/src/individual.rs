@@ -1,4 +1,3 @@
-use glam::Vec2;
 use rand::{rngs::ThreadRng, Rng};
 
 use crate::{command::Command, game_info::GameInfo, perceptron::Perceptron};
@@ -37,7 +36,7 @@ impl Individual {
             score: 0.0,
         };
 
-        if rng.gen_range(0.0..1.0) < mutation_chance {
+        if rng.gen_range(0.0..=1.0) < mutation_chance {
             individual.mutate(rng);
         }
 
@@ -56,7 +55,7 @@ impl Individual {
             bullet_distance_to_target = game_info.target_size
         }
 
-        let score = game_info.target_size / bullet_distance_to_target;
+        let score = game_info.target_size / bullet_distance_to_target; // 0..1 or -1..1
         if score > self.score {
             self.score = score;
         }
@@ -91,7 +90,11 @@ impl Individual {
         [rotation_guess, fire_guess]
     }
 
-    fn mutate(&mut self, _rng: &mut ThreadRng) {
-        todo!()
+    fn mutate(&mut self, rng: &mut ThreadRng) {
+        if rng.gen_bool(0.5) {
+            self.rotate_perceptron = Perceptron::new(rng, 7);
+        } else {
+            self.fire_perceptron = Perceptron::new(rng, 7);
+        }
     }
 }

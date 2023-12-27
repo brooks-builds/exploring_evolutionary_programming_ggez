@@ -12,6 +12,7 @@ pub struct Entity {
     acceleration: Vec2,
     pub is_alive: bool,
     pub aim_rotation: f32,
+    pub fired: bool,
 }
 
 impl Entity {
@@ -22,6 +23,7 @@ impl Entity {
         let acceleration = Vec2::ZERO;
         let is_alive = true;
         let aim_rotation = 0.0;
+        let fired = false;
 
         Self {
             position,
@@ -31,6 +33,7 @@ impl Entity {
             acceleration,
             is_alive,
             aim_rotation,
+            fired,
         }
     }
 
@@ -57,12 +60,5 @@ impl Entity {
 
     pub fn bounce_y(&mut self) {
         self.velocity.y *= -1.0;
-    }
-
-    pub fn is_out_of_arena(&self, arena_width: f32, arena_height: f32) -> bool {
-        self.position.y + self.size < 0.0
-            || self.position.x - self.size > arena_width
-            || self.position.y - self.size > arena_height
-            || self.position.x + self.size < 0.0
     }
 }

@@ -27,9 +27,9 @@ impl Perceptron {
     }
 
     fn activate(sum: f32) -> i8 {
-        if sum > 0.1 {
+        if sum > 0.5 {
             1
-        } else if sum < -0.1 {
+        } else if sum < -0.5 {
             -1
         } else {
             0

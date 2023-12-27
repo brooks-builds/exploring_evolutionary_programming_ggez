@@ -13,18 +13,19 @@ pub struct MainState {
     players: Vec<Entity>,
     width: f32,
     height: f32,
-    running: bool,
     bot: Bot,
     target: Entity,
     bullet_speed: f32,
     bullets: Vec<Entity>,
     rotate_amount: f32,
+    end_generation_on_tick: usize,
+    bot_population_size: usize,
 }
 
 impl MainState {
     pub fn new(width: f32, height: f32) -> Self {
-        let running = false;
-        let bot = Bot::new();
+        let bot_population_size = 100;
+        let bot = Bot::new(bot_population_size as u8);
         let mut target = Entity::new(width - 50.0, 50.0, 25.0);
         let bullet_speed = 15.0;
         let players = bot
@@ -34,6 +35,7 @@ impl MainState {
             .collect();
         let bullets = vec![];
         let rotate_amount = 0.01;
+        let end_generation_on_tick = 1000;
 
         target.apply_force(Vec2::new(0.0, 0.5));
 
@@ -41,18 +43,20 @@ impl MainState {
             players,
             width,
             height,
-            running,
             bot,
             target,
             bullet_speed,
             bullets,
             rotate_amount,
+            end_generation_on_tick,
+            bot_population_size,
         }
     }
 }
 
 impl EventHandler for MainState {
-    fn update(&mut self, _context: &mut ggez::Context) -> Result<(), ggez::GameError> {
+    fn update(&mut self, context: &mut ggez::Context) -> Result<(), ggez::GameError> {
+        let ticks = context.time.ticks();
         let arena_size = Vec2::new(self.width, self.height);
         let target_position = self.target.position;
         let target_velocity = self.target.velocity;
@@ -76,10 +80,63 @@ impl EventHandler for MainState {
                 match command {
                     bot::command::Command::RotateLeft => player.aim_rotation -= self.rotate_amount,
                     bot::command::Command::RotateRight => player.aim_rotation += self.rotate_amount,
-                    bot::command::Command::Fire => (),
+                    bot::command::Command::Fire => {
+                        if player.fired {
+                            continue;
+                        }
+
+                        let bullet_count = self.bullets.len() + 1;
+                        let mut bullet = Entity::new(player.position.x, player.position.y, 5.0);
+                        let mut aim = Vec2::from_angle(player.aim_rotation);
+
+                        aim *= bullet_speed;
+                        bullet.apply_force(aim);
+                        self.bullets.push(bullet);
+
+                        player.fired = true;
+
+                        if bullet_count >= self.bot_population_size {
+                            self.end_generation_on_tick = ticks + 50;
+                        }
+                    }
                     bot::command::Command::Nothing => (),
                 }
             }
+        }
+
+        for ((bullet, individual), player) in self
+            .bullets
+            .iter_mut()
+            .zip(self.bot.population.iter_mut())
+            .zip(self.players.iter())
+        {
+            let game_info = GameInfo::new(
+                player.position,
+                arena_size,
+                target_position,
+                target_velocity,
+                target_size,
+                Some(bullet.position),
+                bullet_speed,
+                player.aim_rotation,
+            );
+
+            individual.update(game_info);
+            bullet.update();
+        }
+
+        if ticks == self.end_generation_on_tick {
+            self.bullets.clear();
+            self.bot.run();
+            self.players.clear();
+            self.players = self
+                .bot
+                .population
+                .iter()
+                .map(|_individual| Entity::new(50.0, arena_size.y / 2.0 - 50.0, 25.0))
+                .collect();
+
+            self.end_generation_on_tick = ticks + 1000;
         }
         // let target = &self.target;
 
@@ -182,8 +239,14 @@ impl EventHandler for MainState {
 
         let mut text = graphics::Text::new(self.bot.generation_count.to_string());
         text.set_scale(PxScale::from(64.0));
-
         canvas.draw(&text, DrawParam::default().dest(Vec2::new(10.0, 500.0)));
+
+        let mut bullet_count = graphics::Text::new(self.bullets.len().to_string());
+        bullet_count.set_scale(PxScale::from(64.0));
+        canvas.draw(
+            &bullet_count,
+            DrawParam::default().dest(Vec2::new(100.0, 500.0)),
+        );
 
         canvas.finish(context)?;
 

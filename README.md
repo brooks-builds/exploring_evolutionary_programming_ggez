@@ -6,13 +6,15 @@ Check [Cargo.toml](Cargo.toml) for crate versions if you are following along.
 
 - rustc 1.74.1
 
-## Todo
+## Experiments
 
-- [x] change stream display to main display
-- [x] calculate the individual aim based on the velocity of the target
-- [x] reduce the size of the bullet
-- [x] increase speed of the bullet
-- [x] update each individual while the simulation plays
-- [x] stop simulation after all bullets gone
-- [x] stop bullets when they hit the target
-- [ ] have individual take bullet speed into account when aiming
+- [ ] Put a wall in front of the target at y/2 to only allow the targets to hit by aiming
+- [ ] Move target and move players
+- [ ] Move target randomly
+- [ ] Have friendly targets you have to avoid
+- [ ] implement energy system
+- [ ] multiple bullets, max score if all hit
+- [ ] allow twitch chat to control some bots
+- [ ] bullets can bounce off the walls
+- [ ] bots can "curve" the bullets with a velocity to affect it every tick
+- [ ] target can fire back and kill the individuals (pair with moving)

@@ -6,7 +6,6 @@ pub mod perceptron;
 
 use command::Command;
 use game_info::GameInfo;
-use glam::Vec2;
 use logic::{create_population, generation, Population};
 
 pub struct Bot {
@@ -19,11 +18,10 @@ pub struct Bot {
 }
 
 impl Bot {
-    pub fn new() -> Self {
-        let population_size = 10;
+    pub fn new(population_size: u8) -> Self {
         let population = create_population(population_size);
-        let graded_retain_percent = 0.3;
-        let nongraded_retain_percent = 0.2;
+        let graded_retain_percent = 0.1;
+        let nongraded_retain_percent = 0.05;
         let generation_count = 1;
         let mutation_chance = 0.1;
 
