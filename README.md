@@ -18,3 +18,4 @@ Check [Cargo.toml](Cargo.toml) for crate versions if you are following along.
 - [ ] bullets can bounce off the walls
 - [ ] bots can "curve" the bullets with a velocity to affect it every tick
 - [ ] target can fire back and kill the individuals (pair with moving)
+- [ ] create a stats log
