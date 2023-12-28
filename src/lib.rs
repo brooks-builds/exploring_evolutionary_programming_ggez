@@ -28,6 +28,7 @@ pub struct MainState {
     end_generation_after_ticks: usize,
     max_hit_count: u8,
     normal_speed: bool,
+    ticks: usize,
 }
 
 impl MainState {
@@ -43,10 +44,11 @@ impl MainState {
             .collect();
         let bullets = vec![];
         let rotate_amount = 0.01;
-        let end_generation_on_tick = 25;
-        let end_generation_after_ticks = 25;
+        let end_generation_on_tick = 50;
+        let end_generation_after_ticks = 10;
         let max_hit_count = 0;
         let normal_speed = true;
+        let ticks = 0;
 
         target.apply_force(Vec2::new(0.0, 0.5));
 
@@ -63,6 +65,7 @@ impl MainState {
             end_generation_after_ticks,
             max_hit_count,
             normal_speed,
+            ticks,
         }
     }
 }
@@ -76,7 +79,6 @@ impl EventHandler for MainState {
         };
 
         while context.time.check_update_time(fps) {
-            let ticks = context.time.ticks();
             let arena_size = Vec2::new(self.width, self.height);
             let target_position = self.target.position;
             let target_velocity = self.target.velocity;
@@ -109,7 +111,7 @@ impl EventHandler for MainState {
                             player.aim_rotation = player.aim_rotation.clamp(-PI, PI);
                         }
                         bot::command::Command::Fire => {
-                            if player.fired {
+                            if player.cool_down > 0 {
                                 continue;
                             }
 
@@ -120,8 +122,8 @@ impl EventHandler for MainState {
                             bullet.apply_force(aim);
                             self.bullets.push(bullet);
 
-                            player.fired = true;
-                            bullet_fired = true;
+                            player.set_cool_down(2);
+                            self.end_generation_on_tick += self.end_generation_after_ticks;
                         }
                         bot::command::Command::Nothing => (),
                     }
@@ -156,11 +158,7 @@ impl EventHandler for MainState {
 
             self.max_hit_count = self.max_hit_count.max(target_hits);
 
-            if bullet_fired {
-                self.end_generation_on_tick += self.end_generation_after_ticks;
-            }
-
-            if ticks == self.end_generation_on_tick {
+            if self.ticks == self.end_generation_on_tick {
                 self.bullets.clear();
                 self.bot.run();
                 self.players.clear();
@@ -171,7 +169,7 @@ impl EventHandler for MainState {
                     .map(|_individual| Entity::new(50.0, arena_size.y / 2.0 - 50.0, 25.0))
                     .collect();
 
-                self.end_generation_on_tick = ticks + self.end_generation_after_ticks;
+                self.end_generation_on_tick = self.ticks + self.end_generation_after_ticks;
             }
             // let target = &self.target;
 
@@ -244,6 +242,8 @@ impl EventHandler for MainState {
             {
                 self.target.bounce_y();
             }
+
+            self.ticks += 1;
         }
         Ok(())
     }

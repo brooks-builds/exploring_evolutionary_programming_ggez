@@ -8,7 +8,6 @@ Check [Cargo.toml](Cargo.toml) for crate versions if you are following along.
 
 ## Experiments
 
-- [ ] Make sure all game information is being passed into the neural network
 - [ ] Put a wall in front of the target at y/2 to only allow the targets to hit by aiming
 - [ ] Move target and move players
 - [ ] Move target randomly

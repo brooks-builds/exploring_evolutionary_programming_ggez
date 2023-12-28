@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use rand::{rngs::ThreadRng, Rng};
 
 use crate::{command::Command, game_info::GameInfo, perceptron::Perceptron};
@@ -67,7 +69,7 @@ impl Individual {
 
     pub fn play(&self, game_info: &GameInfo) -> [Command; 2] {
         let position = game_info.position.normalize();
-        let rotation = game_info.aim_rotation / 360.0;
+        let rotation = game_info.aim_rotation / PI;
         let target_position = game_info.target_position.normalize();
         let target_velocity = game_info.target_velocity.normalize();
 

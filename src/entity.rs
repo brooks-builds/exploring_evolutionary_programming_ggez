@@ -12,7 +12,7 @@ pub struct Entity {
     acceleration: Vec2,
     pub is_alive: bool,
     pub aim_rotation: f32,
-    pub fired: bool,
+    pub cool_down: u8,
 }
 
 impl Entity {
@@ -23,7 +23,7 @@ impl Entity {
         let acceleration = Vec2::ZERO;
         let is_alive = true;
         let aim_rotation = 0.0;
-        let fired = false;
+        let cool_down = 0;
 
         Self {
             position,
@@ -33,7 +33,7 @@ impl Entity {
             acceleration,
             is_alive,
             aim_rotation,
-            fired,
+            cool_down,
         }
     }
 
@@ -56,9 +56,14 @@ impl Entity {
         self.velocity += self.acceleration;
         self.position += self.velocity;
         self.acceleration = Vec2::ZERO;
+        self.cool_down = self.cool_down.saturating_sub(1);
     }
 
     pub fn bounce_y(&mut self) {
         self.velocity.y *= -1.0;
+    }
+
+    pub fn set_cool_down(&mut self, cool_down: u8) {
+        self.cool_down = cool_down;
     }
 }
