@@ -8,6 +8,7 @@ Check [Cargo.toml](Cargo.toml) for crate versions if you are following along.
 
 ## Experiments
 
+- [ ] Make sure all game information is being passed into the neural network
 - [ ] Put a wall in front of the target at y/2 to only allow the targets to hit by aiming
 - [ ] Move target and move players
 - [ ] Move target randomly
@@ -19,3 +20,4 @@ Check [Cargo.toml](Cargo.toml) for crate versions if you are following along.
 - [ ] bots can "curve" the bullets with a velocity to affect it every tick
 - [ ] target can fire back and kill the individuals (pair with moving)
 - [ ] create a stats log
+- [ ] save the weights to a file

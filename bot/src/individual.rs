@@ -28,8 +28,12 @@ impl Individual {
         mutation_chance: f32,
         rng: &mut ThreadRng,
     ) -> Self {
-        let rotate_perceptron = parent_one.rotate_perceptron.clone();
-        let fire_perceptron = parent_two.fire_perceptron.clone();
+        let rotate_perceptron = Perceptron::new_from_parents(
+            &parent_one.rotate_perceptron,
+            &parent_two.rotate_perceptron,
+        );
+        let fire_perceptron =
+            Perceptron::new_from_parents(&parent_one.fire_perceptron, &parent_two.fire_perceptron);
         let mut individual = Self {
             rotate_perceptron,
             fire_perceptron,
@@ -82,7 +86,7 @@ impl Individual {
             0 => Command::Nothing,
             _ => unreachable!(),
         };
-        let fire_guess = match self.rotate_perceptron.guess(&inputs) {
+        let fire_guess = match self.fire_perceptron.guess(&inputs) {
             1 => Command::Fire,
             _ => Command::Nothing,
         };
@@ -92,9 +96,9 @@ impl Individual {
 
     fn mutate(&mut self, rng: &mut ThreadRng) {
         if rng.gen_bool(0.5) {
-            self.rotate_perceptron = Perceptron::new(rng, 7);
+            self.rotate_perceptron.mutate(rng);
         } else {
-            self.fire_perceptron = Perceptron::new(rng, 7);
+            self.fire_perceptron.mutate(rng);
         }
     }
 }

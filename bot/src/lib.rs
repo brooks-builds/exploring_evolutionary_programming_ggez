@@ -23,7 +23,7 @@ impl Bot {
         let graded_retain_percent = 0.1;
         let nongraded_retain_percent = 0.05;
         let generation_count = 1;
-        let mutation_chance = 0.1;
+        let mutation_chance = 0.25;
 
         Self {
             population,
