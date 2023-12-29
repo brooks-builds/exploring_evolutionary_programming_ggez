@@ -20,8 +20,8 @@ pub struct Bot {
 impl Bot {
     pub fn new(population_size: u8) -> Self {
         let population = create_population(population_size);
-        let graded_retain_percent = 0.1;
-        let nongraded_retain_percent = 0.05;
+        let graded_retain_percent = 0.3;
+        let nongraded_retain_percent = 0.2;
         let generation_count = 1;
         let mutation_chance = 0.25;
 

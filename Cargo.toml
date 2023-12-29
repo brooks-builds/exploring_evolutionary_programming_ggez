@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 ggez = "0.9.3"
 bot = { path = "./bot" }
+rand = "0.8.5"
 
 [workspace]
 members = [

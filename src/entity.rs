@@ -13,6 +13,7 @@ pub struct Entity {
     pub is_alive: bool,
     pub aim_rotation: f32,
     pub cool_down: u8,
+    pub fired: bool,
 }
 
 impl Entity {
@@ -24,6 +25,7 @@ impl Entity {
         let is_alive = true;
         let aim_rotation = 0.0;
         let cool_down = 0;
+        let fired = false;
 
         Self {
             position,
@@ -34,6 +36,7 @@ impl Entity {
             is_alive,
             aim_rotation,
             cool_down,
+            fired,
         }
     }
 
@@ -61,6 +64,10 @@ impl Entity {
 
     pub fn bounce_y(&mut self) {
         self.velocity.y *= -1.0;
+    }
+
+    pub fn bounce_x(&mut self) {
+        self.velocity.x *= -1.0;
     }
 
     pub fn set_cool_down(&mut self, cool_down: u8) {
